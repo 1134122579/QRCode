@@ -7,6 +7,8 @@
 
 ## 安装
 
+还没有发布npm包 功能好了
+
 ```bash
 $ npm install wx-qrcode
 ```
