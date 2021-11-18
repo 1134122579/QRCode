@@ -1,9 +1,47 @@
-!(function () {
+var QR = (function () {
   // alignment pattern
   var adelta = [
-    0, 11, 15, 19, 23, 27, 31, 16, 18, 20, 22, 24, 26, 28, 20, 22, 24, 24, 26,
-    28, 28, 22, 24, 24, 26, 26, 28, 28, 24, 24, 26, 26, 26, 28, 28, 24, 26, 26,
-    26, 28, 28,
+    0,
+    11,
+    15,
+    19,
+    23,
+    27,
+    31, // force 1 pat
+    16,
+    18,
+    20,
+    22,
+    24,
+    26,
+    28,
+    20,
+    22,
+    24,
+    24,
+    26,
+    28,
+    28,
+    22,
+    24,
+    24,
+    26,
+    26,
+    28,
+    28,
+    24,
+    24,
+    26,
+    26,
+    26,
+    28,
+    28,
+    24,
+    26,
+    26,
+    26,
+    28,
+    28,
   ];
 
   // version block
@@ -692,108 +730,83 @@
         if (k) qrframe[6 - k + width * 8] = 1;
         else qrframe[7 + width * 8] = 1;
       }
+
+    // return image
     return qrframe;
   }
 
-  var _canvas = null;
-
-  //   API  这里
+  var _canvas = null,
+    _size = null;
 
   var api = {
-    get ecclevel() {
-      return ecclevel;
-    },
+    // get ecclevel() {
+    //   return ecclevel;
+    // },
 
-    set ecclevel(val) {
-      ecclevel = val;
-    },
+    // set ecclevel(val) {
+    //   ecclevel = val;
+    // },
 
-    get size() {
-      return _size;
-    },
+    // get size() {
+    //   return _size;
+    // },
 
-    set size(val) {
-      _size = val;
-    },
+    // set size(val) {
+    //   _size = val;
+    // },
 
-    get canvas() {
-      return _canvas;
-    },
+    // get canvas() {
+    //   return _canvas;
+    // },
 
-    set canvas(el) {
-      _canvas = el;
-    },
+    // set canvas(el) {
+    //   _canvas = el;
+    // },
 
     getFrame: function (string) {
       return genframe(string);
     },
-    //这里的utf16to8(str)是对Text中的字符串进行转码，让其支持中文
-    utf16to8: function (str) {
-      var out, i, len, c;
-
-      out = "";
-      len = str.length;
-      for (i = 0; i < len; i++) {
-        c = str.charCodeAt(i);
-        if (c >= 0x0001 && c <= 0x007f) {
-          out += str.charAt(i);
-        } else if (c > 0x07ff) {
-          out += String.fromCharCode(0xe0 | ((c >> 12) & 0x0f));
-          out += String.fromCharCode(0x80 | ((c >> 6) & 0x3f));
-          out += String.fromCharCode(0x80 | ((c >> 0) & 0x3f));
-        } else {
-          out += String.fromCharCode(0xc0 | ((c >> 6) & 0x1f));
-          out += String.fromCharCode(0x80 | ((c >> 0) & 0x3f));
-        }
-      }
-      return out;
-    },
-    /**
-     * 新增$this参数，传入组件的this,兼容在组件中生成
-     */
     /**
      *
-     * @param {*} str
+     * @param {*} string
      * @param {*} canvas
-     * @param {*} param2
-     * @param {*} $this
-     * @param {*} cb
+     * @param {*} size
      * @param {*} ecc
      * @returns
      */
-    draw: function (
-      str,
-      canvas,
-      { cavW, cavH, cavBgcolor, cavcolor },
-      $this,
-      cb = function () {},
-      ecc
-    ) {
-      console.log(str, canvas, { cavW, cavH, cavBgcolor, cavcolor }, $this);
-      var that = this;
+
+    draw: function (string, canvas, size, ecc) {
+      let { bgcolor, color, padding_width, padding_height } = canvas;
+      color = color || "#000000";
+      bgcolor = bgcolor || "red";
+      padding_width = padding_width || 0;
+      padding_height = padding_width || 0;
       ecclevel = ecc || ecclevel;
       canvas = canvas || _canvas;
-      if (!canvas) {
+
+      if (!canvas.ctx) {
         console.warn(
-          "No canvas provided to draw QR code in! 没有提供用于绘制二维码的画布"
+          "No canvas provided to draw QR code in!==没有提供用于绘制二维码的画布"
         );
         return;
       }
+      const width = 25;
+      size = Math.min(canvas.width, canvas.height);
 
-      var size = Math.min(cavW, cavH);
-      str = that.utf16to8(str); //增加中文显示
-
-      var frame = that.getFrame(str),
-        // 组件中生成qrcode需要绑定this
-        ctx = wx.createCanvasContext(canvas, $this),
+      var frame = genframe(string),
+        ctx = canvas.ctx,
         px = Math.round(size / (width + 8));
+
       var roundedSize = px * (width + 8),
         offset = Math.floor((size - roundedSize) / 2);
+      console.log(size, px, width, roundedSize, offset);
+
       size = roundedSize;
-      //ctx.clearRect(0, 0, cavW, cavW);
-      ctx.setFillStyle(cavBgcolor || "#ffffff");
-      ctx.fillRect(0, 0, cavW, cavW);
-      ctx.setFillStyle(cavcolor || "#000000");
+      ctx.setFillStyle(bgcolor);
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.setFillStyle(color);
+      // ctx.Math
+
       for (var i = 0; i < width; i++) {
         for (var j = 0; j < width; j++) {
           if (frame[j * width + i]) {
@@ -801,13 +814,11 @@
           }
         }
       }
-      //--增加绘制完成回调
-      ctx.draw(false, function () {
-        cb();
-      });
+      ctx.draw();
     },
   };
+
   module.exports = {
-    api,
+    api: api,
   };
 })();
